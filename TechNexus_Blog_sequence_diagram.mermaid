@@ -1,0 +1,146 @@
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant API
+    participant AuthService
+    participant ContentService
+    participant SearchService
+    participant RecommendationService
+    participant NotificationService
+    participant Database
+    participant Cache
+    participant CDN
+
+    %% User Authentication Flow - Email/Password
+    User->>Frontend: Login request
+    Frontend->>API: POST /auth/login
+    API->>AuthService: validateCredentials()
+    AuthService->>Database: queryUser()
+    Database-->>AuthService: Return user data
+    AuthService->>AuthService: verifyPassword()
+    AuthService-->>API: Return JWT token
+    API-->>Frontend: Return authentication response
+    Frontend->>Frontend: Store token in local storage
+    Frontend-->>User: Display logged-in state
+
+    %% User Authentication Flow - OAuth
+    User->>Frontend: Click OAuth Login (e.g., Google)
+    Frontend->>API: GET /auth/oauth/google (or other provider)
+    API->>AuthService: initiateOAuth("google")
+    AuthService-->>Frontend: Redirect URL for Google
+    User->>User: Redirects to Google, authenticates
+    User->>API: Callback to /auth/oauth/google/callback with auth code
+    API->>AuthService: handleOAuthCallback("google", authCode)
+    AuthService->>AuthService: Exchange code for token, get/create user
+    AuthService-->>API: Return JWT token
+    API-->>Frontend: Return authentication response
+    Frontend->>Frontend: Store token in local storage
+    Frontend-->>User: Display logged-in state
+
+    %% Homepage Loading Flow
+    User->>Frontend: Access homepage
+    Frontend->>API: GET /content/featured
+    API->>ContentService: getFeaturedContent()
+    ContentService->>Database: queryFeaturedArticles()
+    Database-->>ContentService: Return featured articles
+    ContentService-->>API: Return featured content
+    API-->>Frontend: Return featured articles
+    Frontend->>API: GET /categories
+    API->>ContentService: getCategories()
+    ContentService->>Cache: getCachedCategories()
+    Cache-->>ContentService: Return cached categories
+    ContentService-->>API: Return categories
+    API-->>Frontend: Return categories
+    Frontend->>API: GET /articles/top-picks
+    API->>ContentService: getTopPicks()
+    ContentService->>Database: queryTopPicksArticles()
+    Database-->>ContentService: Return top picks articles
+    ContentService-->>API: Return top picks
+    API-->>Frontend: Return top picks articles
+    
+    alt User is authenticated
+        Frontend->>API: GET /recommendations
+        API->>RecommendationService: getPersonalizedContent(userId)
+        RecommendationService->>Database: getUserPreferences(userId)
+        Database-->>RecommendationService: Return user preferences
+        RecommendationService->>Database: queryRecommendedArticles(preferences)
+        Database-->>RecommendationService: Return recommended articles
+        RecommendationService-->>API: Return personalized content
+        API-->>Frontend: Return recommended articles
+    end
+    
+    Frontend->>Frontend: Render homepage
+    Frontend-->>User: Display homepage content
+
+    %% Article Reading Flow
+    User->>Frontend: Select article
+    Frontend->>API: GET /articles/{slug}
+    API->>ContentService: getArticle(slug)
+    ContentService->>Cache: getCachedArticle(slug)
+    alt Article in cache
+        Cache-->>ContentService: Return cached article
+    else Article not in cache
+        ContentService->>Database: queryArticle(slug)
+        Database-->>ContentService: Return article data
+        ContentService->>Cache: cacheArticle(article)
+    end
+    ContentService-->>API: Return article content
+    API-->>Frontend: Return article data
+    Frontend->>CDN: Request media assets
+    CDN-->>Frontend: Return optimized media
+    Frontend->>Frontend: Render article page
+    Frontend-->>User: Display article
+    Frontend->>API: POST /articles/{id}/view
+    API->>ContentService: recordView(articleId, userId)
+    ContentService->>Database: incrementViewCount(articleId)
+    ContentService->>Database: saveUserActivity(userId, articleId, 'VIEW')
+
+    %% Search Flow
+    User->>Frontend: Submit search query
+    Frontend->>API: GET /search?q={query}&filters={filters}
+    API->>SearchService: searchContent(query, filters)
+    SearchService->>Database: performSearch(query, filters)
+    Database-->>SearchService: Return search results
+    SearchService-->>API: Return search results
+    API-->>Frontend: Return search results
+    Frontend-->>User: Display search results
+
+    %% Comment Submission Flow
+    User->>Frontend: Submit comment
+    Frontend->>API: POST /articles/{id}/comments
+    API->>AuthService: validateToken()
+    AuthService-->>API: Token valid
+    API->>ContentService: createComment(articleId, userId, content)
+    ContentService->>Database: saveComment(comment)
+    Database-->>ContentService: Return created comment
+    ContentService-->>API: Return comment
+    API-->>Frontend: Return success response
+    Frontend-->>User: Display updated comment section
+
+    %% Article saves the comment and notifies author
+    ContentService->>NotificationService: notifyCommentAdded(articleId, commentId)
+    NotificationService->>Database: getArticleAuthor(articleId)
+    Database-->>NotificationService: Return author data
+    NotificationService->>Database: createNotification(authorId, 'NEW_COMMENT')
+    alt Author has email notifications enabled
+        NotificationService->>NotificationService: sendEmailNotification(authorEmail, notification)
+    end
+
+    %% Interactive Content Interaction
+    User->>Frontend: Interact with code playground
+    Frontend->>Frontend: Execute code in sandbox
+    Frontend->>API: POST /interactions/{id}/save
+    API->>ContentService: saveInteraction(interactionId, state)
+    ContentService->>Database: saveInteractionState(interactionId, userId, state)
+
+    %% Newsletter Subscription Flow
+    User->>Frontend: Subscribe to newsletter
+    Frontend->>API: POST /newsletters/subscribe
+    API->>ContentService: addNewsletterSubscriber(email, preferences)
+    ContentService->>Database: saveSubscriber(email, preferences)
+    ContentService->>NotificationService: sendWelcomeEmail(email)
+    NotificationService->>NotificationService: generateWelcomeTemplate(email)
+    NotificationService->>NotificationService: sendEmail(email, template)
+    ContentService-->>API: Return subscription status
+    API-->>Frontend: Return success response
+    Frontend-->>User: Display subscription confirmation

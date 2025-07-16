@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    privileged: true # Needed for Docker-in-Docker
+    volumes:
+      - ..:/workspace:cached
+    environment:
+      - SUPABASE_ACCESS_TOKEN=${SUPABASE_ACCESS_TOKEN}
+    command: sleep infinity
+    # Expose ports as needed
+    ports:
+      - "54321:54321" # Example: Supabase local dev port
+      - "3000:3000" # Example: App port
+    # Add more ports as needed

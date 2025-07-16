@@ -1,0 +1,11 @@
+{
+  "name": "My Web App Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/deno:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2.12.2": {}
+  },
+  "postCreateCommand": "npm install -g supabase"
+}

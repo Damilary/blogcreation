@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/USER/Videos/clone repo/technexus-blog",
+        "--project-id=960829"
+      ],
+      "alwaysAllow": [
+        "read_file",
+        "read_multiple_files",
+        "get_file_info",
+        "list_allowed_directories",
+        "edit_file",
+        "write_file",
+        "list_directory",
+        "search_files",
+        "move_file",
+        "directory_tree"
+      ],
+      "disabled": true
+    }, "My Project": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "apidog-mcp-server@latest",
+        "--project-id=960829"
+      ],
+      "env": {
+        "APIDOG_ACCESS_TOKEN": "<access-token>"
+      }
+    }
+  }
+}

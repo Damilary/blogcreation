@@ -1,0 +1,15 @@
+{
+  // Enable the Deno language server for this workspace.
+  // Project-specific settings like linting and unstable APIs are now in deno.jsonc
+  "deno.enable": true,
+  // Set Deno as the default formatter for the languages it supports.
+  "editor.defaultFormatter": "denoland.vscode-deno",
+  "vscode-edge-devtools.browserFlavor": "Default",
+  "vscode-edge-devtools.headless": false,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  }
+}

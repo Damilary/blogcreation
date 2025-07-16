@@ -1,0 +1,237 @@
+classDiagram
+    class User {
+        +string id
+        +string username
+        +string email
+        +string passwordHash
+        +string firstName
+        +string lastName
+        +UserRole role
+        +UserPreferences preferences
+        +DateTime createdAt
+        +DateTime updatedAt
+        +register()
+        +login()
+        +updateProfile()
+        +saveArticle()
+        +followAuthor()
+    }
+
+    class UserPreferences {
+        +string[] favoriteCategories
+        +string[] savedArticles
+        +string[] followedAuthors
+        +ExpertiseLevel preferredLevel
+        +boolean darkModeEnabled
+        +boolean emailNotificationsEnabled
+        +ContentFormat[] preferredFormats
+        +updatePreferences()
+    }
+
+    class Author {
+        +string id
+        +string userId
+        +string bio
+        +string expertise
+        +string[] specializations
+        +string avatarUrl
+        +string[] socialLinks
+        +DateTime joinedDate
+        +getPublishedArticles()
+        +updateProfile()
+    }
+
+    class Article {
+        +string id
+        +string title
+        +string slug
+        +string excerpt
+        +ContentBlock[] content
+        +Author author
+        +Category primaryCategory
+        +Category[] secondaryCategories
+        +string[] tags
+        +ExpertiseLevel expertiseLevel
+        +ContentFormat format
+        +DateTime publishedDate
+        +DateTime updatedDate
+        +int readTimeMinutes
+        +MetaData meta
+        +ArticleStatistics statistics
+        +boolean isFeatured
+        +boolean isPublished
+        +boolean isTopPick
+        +int topPickOrder
+        +publish()
+        +unpublish()
+        +update()
+        +addComment()
+        +calculateReadTime()
+    }
+
+    class ContentBlock {
+        +string id
+        +string type
+        +string content
+        +object metadata
+        +render()
+        +validate()
+    }
+
+    class CodeBlock {
+        +string language
+        +string code
+        +boolean isEditable
+        +boolean isRunnable
+        +executeCode()
+        +highlightSyntax()
+    }
+
+    class InteractiveElement {
+        +string type
+        +object configuration
+        +object state
+        +render()
+        +handleInteraction()
+        +saveState()
+    }
+
+    class Category {
+        +string id
+        +string name
+        +string slug
+        +string description
+        +string iconUrl
+        +Category parentCategory
+        +getArticles()
+        +getSubCategories()
+    }
+
+    class Comment {
+        +string id
+        +string content
+        +User author
+        +Comment parentComment
+        +DateTime createdAt
+        +boolean isApproved
+        +int upvotes
+        +int downvotes
+        +addReply()
+        +upvote()
+        +downvote()
+        +flag()
+    }
+
+    class ArticleStatistics {
+        +int views
+        +int uniqueVisitors
+        +int likes
+        +int shares
+        +int bookmarks
+        +int commentCount
+        +float averageTimeOnPage
+        +float scrollDepthPercentage
+        +updateStats()
+        +generateReport()
+    }
+
+    class Search {
+        +searchArticles(query, filters)
+        +getSuggestions(partialQuery)
+        +getRecentSearches()
+        +saveSearchQuery()
+    }
+
+    class Recommendation {
+        +getRecommendedArticles(user)
+        +getSimilarArticles(article)
+        +getTrendingArticles()
+        +getPersonalizedFeed(user)
+    }
+
+    class Newsletter {
+        +string id
+        +string name
+        +string description
+        +Category[] categories
+        +ExpertiseLevel level
+        +int subscriberCount
+        +DateTime lastSentDate
+        +createCampaign()
+        +sendNewsletter()
+        +addSubscriber()
+        +removeSubscriber()
+    }
+
+    class LearningPath {
+        +string id
+        +string title
+        +string description
+        +ExpertiseLevel startLevel
+        +ExpertiseLevel endLevel
+        +Article[] articles
+        +int estimatedHours
+        +addArticle()
+        +trackUserProgress()
+        +getCompletionRate()
+    }
+
+    class NotificationService {
+        +createNotification()
+        +markAsRead()
+        +getUserNotifications()
+        +sendEmailNotification()
+        +sendPushNotification()
+    }
+
+    class AdminDashboard {
+        +getContentMetrics()
+        +getUserMetrics()
+        +getEngagementMetrics()
+        +getPendingApprovals()
+        +generateReports()
+    }
+
+    %% Enums
+    class ExpertiseLevel {
+        <<enumeration>>
+        BEGINNER
+        INTERMEDIATE
+        ADVANCED
+    }
+
+    class ContentFormat {
+        <<enumeration>>
+        ARTICLE
+        TUTORIAL
+        CASE_STUDY
+        REVIEW
+        DEEP_DIVE
+        VIDEO
+        INTERACTIVE
+    }
+
+    class UserRole {
+        <<enumeration>>
+        READER
+        CONTRIBUTOR
+        EDITOR
+        ADMIN
+    }
+
+    %% Relationships
+    User "1" -- "1" UserPreferences : has
+    User "1" -- "0..1" Author : can be
+    Author "1" -- "*" Article : writes
+    Article "1" -- "*" ContentBlock : contains
+    ContentBlock <|-- CodeBlock : extends
+    ContentBlock <|-- InteractiveElement : extends
+    Article "*" -- "1" Category : belongs to
+    Article "*" -- "*" Category : has secondary
+    Category "*" -- "0..1" Category : has parent
+    Article "1" -- "*" Comment : has
+    Comment "0..1" -- "*" Comment : has replies
+    Article "1" -- "1" ArticleStatistics : has
+    User "1" -- "*" Comment : posts
+    Newsletter "*" -- "*" Category : covers
+    LearningPath "1" -- "*" Article : includes
