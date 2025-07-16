@@ -1,5 +1,42 @@
 version: "3.8"
 services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: supabase
+      POSTGRES_PASSWORD: supabase
+      POSTGRES_DB: supabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  supabase:
+    image: supabase/supabase-local:latest
+    depends_on:
+      - postgres
+    environment:
+      SUPABASE_DB_URL: postgres://supabase:supabase@postgres:5432/supabase
+    ports:
+      - "54321:54321"
+      - "54322:54322"
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   app:
     build:
       context: .
@@ -9,9 +46,69 @@ services:
       - ..:/workspace:cached
     environment:
       - SUPABASE_ACCESS_TOKEN=${SUPABASE_ACCESS_TOKEN}
+      - DATABASE_URL=postgres://supabase:supabase@postgres:5432/supabase
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - SUPABASE_URL=http://supabase:54321
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - SENTRY_DSN=${SENTRY_DSN}
     command: sleep infinity
-    # Expose ports as needed
     ports:
-      - "54321:54321" # Example: Supabase local dev port
-      - "3000:3000" # Example: App port
-    # Add more ports as needed
+      - "54321:54321"
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - meilisearch
+      - supabase
+      - redis
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./.devcontainer/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - monitoring_network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitoring_network
+
+networks:
+  monitoring_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  meili_data:
+  redis_data:
+  grafana_data:

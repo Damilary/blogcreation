@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s # By default, scrape targets every 15 seconds.
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'nextjs_app'
+    # Replace 'your_nextjs_app_host:port' with the actual host and port of your Next.js app
+    # If running in Docker, this might be the service name and port, e.g., 'nextjs_service:3000'
+    static_configs:
+      - targets: ['host.docker.internal:3000'] # Assuming Next.js app runs on host machine, accessible from Docker
